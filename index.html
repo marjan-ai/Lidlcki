@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>PWA Tap Game</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    :root { --bg:#0f172a; --fg:#e5e7eb; --card:#111827; }
+    * { box-sizing: border-box; }
+    html, body { margin:0; height:100%; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--fg); }
+    .wrap { min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+    .card { background:var(--card); width:100%; max-width:520px; padding:24px; border-radius:16px; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+    h1 { margin:0 0 8px 0; font-size:28px; }
+    p.muted { color:#94a3b8; margin-top:0; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    button.btn { cursor:pointer; font-size:18px; padding:14px 18px; border-radius:12px; border:none; font-weight:700; color:#0b121a; background:#22c55e; }
+    button.btn.secondary { background:#60a5fa; }
+    button.btn.warn { background:#f59e0b; }
+    .stats { display:flex; gap:16px; margin:12px 0 0; }
+    .stat { background:#0b1220; border:1px solid #1f2937; padding:10px 12px; border-radius:10px; }
+    kbd { background:#0b1220; border:1px solid #1f2937; border-bottom-width:2px; border-radius:8px; padding:2px 8px; }
+    footer { text-align:center; margin-top:16px; font-size:13px; color:#94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Tap Game</h1>
+      <p class="muted">Tap as many times as you can in <strong id="durationLabel">10</strong> seconds. Edit this text in <code>index.html</code>.</p>
+      <div class="row" style="margin-bottom:10px;">
+        <button id="tap" class="btn">TAP</button>
+        <button id="start" class="btn secondary">Start</button>
+        <button id="reset" class="btn warn">Reset</button>
+      </div>
+      <div class="stats">
+        <div class="stat">Score: <strong id="score">0</strong></div>
+        <div class="stat">Time: <strong id="time">10.0</strong>s</div>
+        <div class="stat">Best: <strong id="best">0</strong></div>
+      </div>
+      <footer>
+        Add to Home Screen for full-screen: Safari → Share → <kbd>Add to Home Screen</kbd>.
+      </footer>
+    </div>
+  </div>
+  <script>
+    const GAME_DURATION_SECONDS = 10; // tweak and commit
+    let score = 0, playing = false, t = GAME_DURATION_SECONDS, timerId = null, lastTick = null;
+    const $ = id => document.getElementById(id);
+    const update = () => {
+      $("score").textContent = score;
+      $("time").textContent = t.toFixed(1);
+      $("durationLabel").textContent = GAME_DURATION_SECONDS;
+      $("best").textContent = Number(localStorage.getItem("bestScore") || 0);
+    };
+    $("tap").addEventListener("click", () => { if (playing) { score++; update(); } });
+    $("start").addEventListener("click", () => {
+      if (playing) return;
+      playing = true; score = 0; t = GAME_DURATION_SECONDS; update();
+      lastTick = performance.now();
+      timerId = requestAnimationFrame(tick);
+    });
+    $("reset").addEventListener("click", () => { stopGame(true); });
+    function tick(now){
+      const dt = (now - lastTick) / 1000;
+      lastTick = now;
+      t -= dt;
+      if (t <= 0) { t = 0; stopGame(false); return; }
+      update();
+      timerId = requestAnimationFrame(tick);
+    }
+    function stopGame(resetOnly){
+      playing = false;
+      if (timerId) cancelAnimationFrame(timerId);
+      if (!resetOnly) {
+        const best = Number(localStorage.getItem("bestScore") || 0);
+        if (score > best) localStorage.setItem("bestScore", String(score));
+        alert(`Time! Your score: ${score}`);
+      }
+      score = 0; t = GAME_DURATION_SECONDS; update();
+    }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(console.error);
+      });
+    }
+    update();
+  </script>
+</body>
+</html>
