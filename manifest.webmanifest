@@ -1,5 +1,5 @@
 {
-  "name": "PWA Tap Game",
+  "name": "Lidl Game"
   "short_name": "TapGame",
   "start_url": "./index.html",
   "display": "standalone",
