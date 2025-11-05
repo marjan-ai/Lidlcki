@@ -1,6 +1,6 @@
 {
   "name": "Lidl Game"
-  "short_name": "TapGame",
+  "short_name": "LidlGame",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f172a",
